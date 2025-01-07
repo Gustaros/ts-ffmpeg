@@ -1,10 +1,18 @@
 # ts-ffmpeg
 
-To create a new video using FFmpeg that consists of the original video followed by its reversed version, while also cutting off the last frame, you can use the following command:
-
 ```bash
-ffmpeg -i input.mp4 -vf "trim=end=1,reverse" -af "areverse" -preset ultrafast -c:v libx264 -c:a aac output.mp4
+ffmpeg -i input.mp4 -filter_complex "[0:v]split[v0][v1];[v1]reverse[v1r];[v1r]trim=start_frame=1[v1r_cut];[v0][v1r_cut]concat=n=2:v=1:a=0[v]" -map "[v]" -c:v libx264 output.mp4
 ```
+
+Explanation:
+• In this command, everything is kept on a single line (without shell line-break backslashes) so FFmpeg won’t treat '\' as part of the filter.  
+• [0:v]split[v0][v1] splits the video stream into two outputs.  
+• [v1]reverse[v1r] reverses the second split.  
+• [v1r]trim=start_frame=1[v1r_cut] removes the first frame of the reversed stream (which corresponds to the last frame of the original).  
+• [v0][v1r_cut]concat=n=2:v=1:a=0[v] concatenates the original ([v0]) and trimmed reversed ([v1r_cut]) segments.  
+• -map "[v]" selects only the processed video.  
+• -c:v libx264 ensures encoding with H.264.
+
 
 ### Explanation of the Command:
 
